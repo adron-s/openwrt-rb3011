@@ -1,0 +1,451 @@
+#include "qcom-ipq8064-v2.0.dtsi"
+
+#include <dt-bindings/input/input.h>
+
+/ {
+	model = "MikroTik RouterBOARD RB3011UiAS";
+	compatible = "mikrotik,rb3011uias", "qcom,ipq8064";
+
+	memory@0 {
+		reg = <0x42000000 0x3e000000>;
+		device_type = "memory";
+	};
+
+	reserved-memory {
+		rsvd@7f000000 { /* 16 Mb for ramoops */
+			reg = <0x7f000000 0x1000000>;
+			reusable;
+		};
+	};
+
+	aliases {
+		led-boot = &act;
+		led-failsafe = &act;
+		led-running = &act;
+		led-upgrade = &act;
+		mdio-gpio0 = &mdio0;
+		mdio-gpio1 = &mdio1;
+		serial0 = &gsbi7_serial;
+	};
+
+	chosen {
+		bootargs = "rootfstype=squashfs noinitrd";
+	};
+
+	i2c_sfp: i2c {
+		compatible = "i2c-gpio";
+		sda-gpios = <&qcom_pinmux 8 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+		scl-gpios = <&qcom_pinmux 9 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+		i2c-gpio,delay-us = <5>;
+		i2c-gpio,timeout-ms = <1>;
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		reset {
+			gpios = <&qcom_pinmux 66 GPIO_ACTIVE_LOW>;
+			label = "reset";
+			linux,code = <KEY_RESTART>;
+			pinctrl-0 = <&reset_button_pins>;
+			pinctrl-names = "default";
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		pinctrl-0 = <&led_pins>;
+		pinctrl-names = "default";
+
+		act: act {
+			label = "rb3011uias:green:act";
+			gpios = <&qcom_pinmux 33 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+	sfp_gmac1: sfp {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c_sfp>;
+		los-gpios = <&qcom_pinmux 68 GPIO_ACTIVE_HIGH>;
+		maximum-power-milliwatt = <2000>;
+		mod-def0-gpios = <&qcom_pinmux 63 GPIO_ACTIVE_LOW>;
+		pinctrl-0 = <&sfp_pins>;
+		pinctrl-names = "default";
+//		rate-select0-gpios = <&qcom_pinmux 50 GPIO_ACTIVE_HIGH>;
+//		rate-select0-gpios = <&qcom_pinmux 50 GPIO_ACTIVE_LOW>;
+//		tx-disable-gpios = <&qcom_pinmux 49 GPIO_ACTIVE_HIGH>;
+		tx-disable-gpios = <&qcom_pinmux 49 GPIO_ACTIVE_LOW>;
+		tx-fault-gpios = <&qcom_pinmux 67 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&adm_dma {
+	status = "okay";
+};
+
+&soc {
+	mdio1: mdio@37200000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		compatible = "qcom,ipq8064-mdio", "syscon";
+		reg = <0x37200000 0x200000>;
+		resets = <&gcc GMAC_CORE2_RESET>;
+		reset-names = "stmmaceth";
+		clocks = <&gcc GMAC_CORE2_CLK>;
+		clock-names = "stmmaceth";
+
+		status = "disabled";
+	};
+};
+
+&qcom_pinmux {
+	pinctrl-0 = <&switch0_reset_pin &switch1_reset_pin &lcd_pwr_pin &port10_poe_pin>;
+	pinctrl-names = "default";
+
+	led_pins: led-pins {
+		mux {
+			pins = "gpio33";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-pull-down;
+		};
+	};
+
+	mdio1_pins: mdio1-pins {
+		mux {
+			pins = "gpio10", "gpio11";
+			function = "mdio";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	reset_button_pins: reset-button-pins {
+		mux {
+			pins = "gpio66";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+	};
+
+	sfp_pins: sfp-pins {
+		mux {
+			pins = "gpio49", "gpio50", "gpio63", "gpio67", "gpio68";
+			function = "gpio";
+			drive-strength = <16>;
+			bias-disable;
+		};
+	};
+
+	switch0_reset_pin: switch0-reset-pin {
+		mux {
+			pins = "gpio16";
+			function = "gpio";
+			drive-strength = <16>;
+			bias-pull-down;
+			output-high;
+		};
+	};
+
+	switch1_reset_pin: switch1-reset-pin {
+		mux {
+			pins = "gpio17";
+			function = "gpio";
+			drive-strength = <16>;
+			bias-pull-down;
+			output-high;
+		};
+	};
+
+	usb0_pwr_en_pins: usb0-pwr-en-pins {
+		mux {
+			pins = "gpio4";
+			function = "gpio";
+			drive-strength = <16>;
+			bias-pull-down;
+			output-high;
+		};
+	};
+
+	lcd_pwr_pin: lcd-pwr-pin {
+		mux {
+			pins = "gpio48";
+			function = "gpio";
+			drive-strength = <16>;
+			bias-pull-down;
+			output-low;
+		};
+	};
+
+	port10_poe_pin: port10-poe-pin {
+		mux {
+			pins = "gpio26";
+			function = "gpio";
+			drive-strength = <16>;
+			bias-pull-down;
+			output-high;
+		};
+	};
+
+};
+
+&gsbi5 {
+	qcom,mode = <GSBI_PROT_SPI>;
+	status = "okay";
+
+	spi@1a280000 {
+		status = "okay";
+
+		pinctrl-0 = <&spi_pins>;
+		pinctrl-names = "default";
+
+		cs-gpios = <&qcom_pinmux 20 GPIO_ACTIVE_HIGH>;
+
+		flash: m25p80@0 {
+			compatible = "jedec,spi-nor";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			spi-max-frequency = <51200000>;
+			reg = <0>;
+
+			partitions {
+				compatible = "fixed-partitions";
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				SBL1@0 {
+					label = "SBL1";
+					reg = <0x00000000 0x20000>;
+					read-only;
+				};
+				MIBIB@20000 {
+					label = "MIBIB";
+					reg = <0x00020000 0x20000>;
+					read-only;
+				};
+				SBL2@40000 {
+					label = "SBL2";
+					reg = <0x00040000 0x40000>;
+					read-only;
+				};
+				SBL3@80000 {
+					label = "SBL3";
+					reg = <0x00080000 0x80000>;
+					read-only;
+				};
+				DDRCONFIG@100000 {
+					label = "DDRCONFIG";
+					reg = <0x00100000 0x10000>;
+					read-only;
+				};
+				SSD@110000 {
+					label = "SSD";
+					reg = <0x00110000 0x10000>;
+					read-only;
+				};
+				TZ@120000 {
+					label = "TZ";
+					reg = <0x00120000 0x80000>;
+					read-only;
+				};
+				RPM@1a0000 {
+					label = "RPM";
+					reg = <0x001a0000 0x20000>;
+					read-only;
+				};
+				APPSBL@1c0000 {
+					label = "APPSBL";
+					reg = <0x001c0000 0x40000>;
+					read-only;
+				};
+				hard_config: RBHARDCONFIG@1cf000 {
+					label = "hard_config";
+					reg = <0x001cf000 0x01000>;
+					read-only;
+				};
+				RBSOFTCONFIG@1e0000 {
+					label = "soft_config";
+					reg = <0x001e0000 0x01000>;
+				};
+			};
+		};
+	};
+};
+
+&gsbi4 {
+	status = "disabled";
+};
+
+&gsbi7 {
+	qcom,mode = <GSBI_PROT_I2C_UART>;
+	status = "okay";
+};
+
+&gsbi7_serial {
+	status = "okay";
+};
+
+&nand_controller {
+	status = "okay";
+
+	pinctrl-0 = <&nand_pins>;
+	pinctrl-names = "default";
+
+	nand@0 {
+		reg = <0>;
+		compatible = "qcom,nandcs";
+
+		nand-ecc-strength = <4>;
+		nand-bus-width = <8>;
+		nand-ecc-step-size = <512>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "kernel";
+				reg = <0x00000000 0x1000000>;
+			};
+
+			partition@1000000 {
+				label = "ubi";
+				reg = <0x1000000 0x7000000>;
+			};
+		};
+	};
+};
+
+&hs_phy_0 { /* USB3 port 0 HS phy */
+	clocks = <&gcc USB30_1_UTMI_CLK>;
+	status = "okay";
+};
+
+&ss_phy_0 { /* USB3 port 0 SS phy */
+	clocks = <&gcc USB30_1_MASTER_CLK>;
+	status = "okay";
+};
+
+&usb3_0 {
+	clocks = <&gcc USB30_1_MASTER_CLK>;
+	pinctrl-0 = <&usb0_pwr_en_pins>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&mdio0 {
+	status = "okay";
+
+	pinctrl-0 = <&mdio0_pins>;
+	pinctrl-names = "default";
+
+	ethernet-phy@0 {
+		reg = <0>;
+		qca,ar8327-initvals = <
+			0x00004 0x07680000  /* PAD0_MODE */
+			0x00008 0x01000000  /* PAD5_MODE */
+			0x0000c 0x00000080  /* PAD6_MODE */
+			0x00010 0x002613A0  /* POWER_ON_STRIP. Disable SERNES_AEN */
+			0x000e0 0xc741e7de  /* SGMII_CTRL */
+			0x000e4 0x0002a545  /* MAC_POWER_SEL */
+			0x0007c 0x4e        /* PORT0_STATUS */
+			0x00094 0x4e        /* PORT6_STATUS */
+		>;
+		qca,ar8327-vlans = <
+			0x1	0x7f	    /* VLAN1 Ports 0/1/2/3/4/5/6 */
+		>;
+	};
+
+	ethernet-phy@4 {
+		reg = <4>;
+	};
+};
+
+&mdio1 {
+	status = "okay";
+
+	pinctrl-0 = <&mdio1_pins>;
+	pinctrl-names = "default";
+
+	ethernet-phy@0 {
+		reg = <0>;
+		qca,ar8327-initvals = <
+			0x00004 0x00080080  /* PAD0_MODE */
+			0x00008 0000000000  /* PAD5_MODE */
+			0x0000c 0x00000000  /* PAD6_MODE */
+			0x00010 0x002613A0  /* POWER_ON_STRIP. Disable SERNES_AEN */
+			0x000e0 0xc741e7de  /* SGMII_CTRL */
+			0x000e4 0x0006a545  /* MAC_POWER_SEL */
+			0x0007c 0x4e        /* PORT0_STATUS */
+			0x00094 0x4e        /* PORT6_STATUS */
+		>;
+		qca,ar8327-vlans = <
+			0x1	0x7f	    /* VLAN1 Ports 0/1/2/3/4/5/6 */
+		>;
+	};
+
+	ethernet-phy@4 {
+		reg = <4>;
+	};
+};
+
+&gmac0 { /* switch0 port 0 */
+	mdiobus = <&mdio0>;
+	mtd-mac-address = <&hard_config 0x10>;
+	mtd-mac-address-increment = <0>;
+	phy-mode = "rgmii";
+	pinctrl-0 = <&rgmii2_pins>;
+	pinctrl-names = "default";
+	qcom,id = <0>;
+	status = "okay";
+
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+	};
+};
+
+&gmac1 { /* SFP */
+	mtd-mac-address = <&hard_config 0x10>;
+	mtd-mac-address-increment = <1>;
+	phy-mode = "sgmii";
+	qcom,id = <1>;
+	//sfp = <&sfp_gmac1>;
+	status = "okay";
+
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+	};
+};
+
+&gmac2 { /* switch0 port 6 */
+	mdiobus = <&mdio0>;
+	mtd-mac-address = <&hard_config 0x10>;
+	mtd-mac-address-increment = <2>;
+	phy-mode = "sgmii";
+	qcom,id = <2>;
+	status = "okay";
+
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+	};
+};
+
+&gmac3 { /* switch1 port 0 */
+	mdiobus = <&mdio1>;
+	mtd-mac-address = <&hard_config 0x10>;
+	mtd-mac-address-increment = <3>;
+	phy-mode = "sgmii";
+	qcom,id = <3>;
+	status = "okay";
+
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+	};
+};

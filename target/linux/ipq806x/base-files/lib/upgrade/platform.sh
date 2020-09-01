@@ -15,7 +15,8 @@ platform_do_upgrade() {
 		CI_ROOTPART="ubi_rootfs"
 		nand_do_upgrade "$1"
 		;;
-	compex,wpq864|\
+	compex,wpq864 |\
+	mikrotik,rb3011uias |\
 	netgear,d7800 |\
 	netgear,r7500 |\
 	netgear,r7500v2 |\
