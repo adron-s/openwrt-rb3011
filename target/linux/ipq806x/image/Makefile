@@ -41,7 +41,7 @@ define Build/ipq-aux-loader-common
 		BOARD="$(BOARDNAME)" PLATFORM="$(PLATFORM)" \
 		BLOCKSIZE="$(BLOCKSIZE)" PAGESIZE="$(PAGESIZE)" \
 		LEBSIZE="$(AUX_LOADER_LEBSIZE)" LEBCOUNT="$(AUX_LOADER_LEBCOUNT)" \
-		UART="$(AUX_LOADER_UART)"	\
+		UART="$(AUX_LOADER_UART)"	RB3011_PREINITS="$(AUX_LOADER_RB3011_PREINITS)"\
 		$(1) LOADER_TYPE=$(2) compile loader.$(2)
 	mv "$@.$(2)" "$@"
 	rm -rf $@.src
@@ -193,6 +193,7 @@ define Device/mikrotik_rb3011uias
 	PAGESIZE := 2048
 	AUX_LOADER_LEBSIZE := 126976
 	AUX_LOADER_LEBCOUNT := 120
+	AUX_LOADER_RB3011_PREINITS := YES
 	DEVICE_PACKAGES := kmod-gpio-beeper
 endef
 TARGET_DEVICES += mikrotik_rb3011uias

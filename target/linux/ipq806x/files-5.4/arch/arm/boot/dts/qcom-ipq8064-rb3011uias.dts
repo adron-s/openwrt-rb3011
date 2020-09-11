@@ -100,7 +100,7 @@
 };
 
 &qcom_pinmux {
-	pinctrl-0 = <&switch0_reset_pin &switch1_reset_pin &lcd_pwr_pin &port10_poe_pin>;
+	pinctrl-0 = <&port10_poe_pin>;
 	pinctrl-names = "default";
 
 	led_pins: led-pins {
@@ -139,7 +139,7 @@
 		};
 	};
 
-	switch0_reset_pin: switch0-reset-pin {
+	sw0_and_phy_reset_pin: switch0-reset-pin {
 		mux {
 			pins = "gpio16";
 			function = "gpio";
@@ -149,7 +149,7 @@
 		};
 	};
 
-	switch1_reset_pin: switch1-reset-pin {
+	sw1_and_phy_reset_pin: switch1-reset-pin {
 		mux {
 			pins = "gpio17";
 			function = "gpio";
@@ -166,16 +166,6 @@
 			drive-strength = <16>;
 			bias-pull-down;
 			output-high;
-		};
-	};
-
-	lcd_pwr_pin: lcd-pwr-pin {
-		mux {
-			pins = "gpio48";
-			function = "gpio";
-			drive-strength = <16>;
-			bias-pull-down;
-			output-low;
 		};
 	};
 
@@ -339,67 +329,218 @@
 &mdio0 {
 	status = "okay";
 
-	pinctrl-0 = <&mdio0_pins>;
+	pinctrl-0 = <&mdio0_pins &sw0_and_phy_reset_pin>;
 	pinctrl-names = "default";
 
-	ethernet-phy@0 {
+	sw0_phy_port1: sw0-phy@0 {
 		reg = <0>;
-		qca,ar8327-initvals = <
+	};
+	sw0_phy_port2: sw0-phy@1 {
+		reg = <1>;
+	};
+	sw0_phy_port3: sw0-phy@2 {
+		reg = <2>;
+	};
+	sw0_phy_port4: sw0-phy@3 {
+		reg = <3>;
+	};
+	sw0_phy_port5: sw0-phy@4 {
+		reg = <4>;
+	};
+
+	switch0: switch@10 {
+		compatible = "qca,qca8337";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		reg = <0x10>;
+		/* The switch chip and its phys reset is done by aux-loader
+			 so DSA driver does not need to do reset again.
+			 reset-gpios = <&qcom_pinmux 16 GPIO_ACTIVE_LOW>; */
+		dsa,member = <0 0>;
+		qca,strict-cpu-mode;
+		qca,swregs-initvals = <
 			0x00004 0x07680000  /* PAD0_MODE */
 			0x00008 0x01000000  /* PAD5_MODE */
-			0x0000c 0x00000080  /* PAD6_MODE */
-			0x00010 0x002613A0  /* POWER_ON_STRIP. Disable SERNES_AEN */
+			0x0000c 0x00000000  /* PAD6_MODE. Must be 0x00000080 if used Port6(without DSA)! */
+			/* 0x00010 0x002613A0  POWER_ON_STRIP - Disable SERNES_AEN. Must be set if used Port6! */
 			0x000e0 0xc741e7de  /* SGMII_CTRL */
 			0x000e4 0x0002a545  /* MAC_POWER_SEL */
+			0x00078 0x00001fdc  /* MAX_FRAME_SIZE */
 			0x0007c 0x4e        /* PORT0_STATUS */
 			0x00094 0x4e        /* PORT6_STATUS */
 		>;
-		qca,ar8327-vlans = <
-			0x1	0x7f	    /* VLAN1 Ports 0/1/2/3/4/5/6 */
-		>;
-	};
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
 
-	ethernet-phy@4 {
-		reg = <4>;
+			switch0cpu: port@0 {
+				reg = <0>;
+				label = "cpu";
+				ethernet = <&gmac0>;
+				phy-mode = "rgmii-id";
+				fixed-link {
+					speed = <1000>;
+					full-duplex;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+				label = "port1";
+				phy-handle = <&sw0_phy_port1>;
+				mtd-mac-address = <&hard_config 0x10>;
+				mtd-mac-address-increment = <4>;
+			};
+
+			port@2 {
+				reg = <2>;
+				label = "port2";
+				phy-handle = <&sw0_phy_port2>;
+				mtd-mac-address = <&hard_config 0x10>;
+				mtd-mac-address-increment = <5>;
+			};
+
+			port@3 {
+				reg = <3>;
+				label = "port3";
+				phy-handle = <&sw0_phy_port3>;
+				mtd-mac-address = <&hard_config 0x10>;
+				mtd-mac-address-increment = <6>;
+			};
+
+			port@4 {
+				reg = <4>;
+				label = "port4";
+				phy-handle = <&sw0_phy_port4>;
+				mtd-mac-address = <&hard_config 0x10>;
+				mtd-mac-address-increment = <7>;
+			};
+
+			port@5 {
+				reg = <5>;
+				label = "port5";
+				phy-handle = <&sw0_phy_port5>;
+				mtd-mac-address = <&hard_config 0x10>;
+				mtd-mac-address-increment = <8>;
+			};
+		};
 	};
 };
 
 &mdio1 {
 	status = "okay";
 
-	pinctrl-0 = <&mdio1_pins>;
+	pinctrl-0 = <&mdio1_pins &sw1_and_phy_reset_pin>;
 	pinctrl-names = "default";
 
-	ethernet-phy@0 {
+	sw1_phy_port1: sw1-phy@0 {
 		reg = <0>;
-		qca,ar8327-initvals = <
+	};
+	sw1_phy_port2: sw1-phy@1 {
+		reg = <1>;
+	};
+	sw1_phy_port3: sw1-phy@2 {
+		reg = <2>;
+	};
+	sw1_phy_port4: sw1-phy@3 {
+		reg = <3>;
+	};
+	sw1_phy_port5: sw1-phy@4 {
+		reg = <4>;
+	};
+
+	switch1: switch@14 {
+		compatible = "qca,qca8337";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		reg = <0x10>;
+		/* The switch chip and its phys reset is done by aux-loader
+			 so DSA driver does not need to do reset again.
+			 reset-gpios = <&qcom_pinmux 17 GPIO_ACTIVE_LOW>; */
+		dsa,member = <1 0>;
+		qca,strict-cpu-mode;
+		qca,swregs-initvals = <
 			0x00004 0x00080080  /* PAD0_MODE */
 			0x00008 0000000000  /* PAD5_MODE */
 			0x0000c 0x00000000  /* PAD6_MODE */
 			0x00010 0x002613A0  /* POWER_ON_STRIP. Disable SERNES_AEN */
 			0x000e0 0xc741e7de  /* SGMII_CTRL */
 			0x000e4 0x0006a545  /* MAC_POWER_SEL */
+			0x00078 0x00001fdc  /* MAX_FRAME_SIZE */
 			0x0007c 0x4e        /* PORT0_STATUS */
 			0x00094 0x4e        /* PORT6_STATUS */
 		>;
-		qca,ar8327-vlans = <
-			0x1	0x7f	    /* VLAN1 Ports 0/1/2/3/4/5/6 */
-		>;
-	};
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
 
-	ethernet-phy@4 {
-		reg = <4>;
+			switch1cpu: port@0 {
+				reg = <0>;
+				label = "cpu";
+				ethernet = <&gmac3>;
+				phy-mode = "sgmii";
+				fixed-link {
+					speed = <1000>;
+					full-duplex;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+				label = "port6";
+				phy-handle = <&sw1_phy_port1>;
+				mtd-mac-address = <&hard_config 0x10>;
+				mtd-mac-address-increment = <9>;
+			};
+
+			port@2 {
+				reg = <2>;
+				label = "port7";
+				phy-handle = <&sw1_phy_port2>;
+				mtd-mac-address = <&hard_config 0x10>;
+				mtd-mac-address-increment = <10>;
+			};
+
+			port@3 {
+				reg = <3>;
+				label = "port8";
+				phy-handle = <&sw1_phy_port3>;
+				mtd-mac-address = <&hard_config 0x10>;
+				mtd-mac-address-increment = <11>;
+			};
+
+			port@4 {
+				reg = <4>;
+				label = "port9";
+				phy-handle = <&sw1_phy_port4>;
+				mtd-mac-address = <&hard_config 0x10>;
+				mtd-mac-address-increment = <12>;
+			};
+
+			port@5 {
+				reg = <5>;
+				label = "port10";
+				phy-handle = <&sw1_phy_port5>;
+				mtd-mac-address = <&hard_config 0x10>;
+				mtd-mac-address-increment = <13>;
+			};
+		};
 	};
 };
 
 &gmac0 { /* switch0 port 0 */
-	mdiobus = <&mdio0>;
 	mtd-mac-address = <&hard_config 0x10>;
 	mtd-mac-address-increment = <0>;
 	phy-mode = "rgmii";
+	phy-handle = <&switch0cpu>;
 	pinctrl-0 = <&rgmii2_pins>;
 	pinctrl-names = "default";
 	qcom,id = <0>;
+	max-frame-size = <3800>;
+	tx-fifo-depth = <4096>;
+	rx-fifo-depth = <4096>;
 	status = "okay";
 
 	fixed-link {
@@ -414,6 +555,9 @@
 	phy-mode = "sgmii";
 	qcom,id = <1>;
 	//sfp = <&sfp_gmac1>;
+	max-frame-size = <3800>;
+	tx-fifo-depth = <4096>;
+	rx-fifo-depth = <4096>;
 	status = "okay";
 
 	fixed-link {
@@ -423,12 +567,11 @@
 };
 
 &gmac2 { /* switch0 port 6 */
-	mdiobus = <&mdio0>;
 	mtd-mac-address = <&hard_config 0x10>;
 	mtd-mac-address-increment = <2>;
 	phy-mode = "sgmii";
 	qcom,id = <2>;
-	status = "okay";
+	status = "disabled";
 
 	fixed-link {
 		speed = <1000>;
@@ -437,11 +580,14 @@
 };
 
 &gmac3 { /* switch1 port 0 */
-	mdiobus = <&mdio1>;
 	mtd-mac-address = <&hard_config 0x10>;
 	mtd-mac-address-increment = <3>;
 	phy-mode = "sgmii";
+	phy-handle = <&switch1cpu>;
 	qcom,id = <3>;
+	max-frame-size = <3800>;
+	tx-fifo-depth = <4096>;
+	rx-fifo-depth = <4096>;
 	status = "okay";
 
 	fixed-link {

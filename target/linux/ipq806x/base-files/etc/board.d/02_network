@@ -42,11 +42,8 @@ linksys,ea8500)
 	ucidef_set_interface_macaddr "wan" "$hw_mac_addr"
 	;;
 mikrotik,rb3011uias)
-	ucidef_set_interface_wan "eth1"
-	ucidef_add_switch "switch0" \
-		"0@eth0" "1:lan" "2:lan" "3:lan" "4:lan" "5:lan"
-	ucidef_add_switch "switch1" \
-		"0@eth3" "1:lan" "2:lan" "3:lan" "4:lan" "5:lan"
+	ucidef_set_interface_wan "port1"
+	ucidef_set_interface_lan "port2 port3 port4 port5 port6 port7 port8 port9 port10"
 	;;
 nec,wg2600hp)
 	ucidef_add_switch "switch0" \
