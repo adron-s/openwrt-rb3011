@@ -35,6 +35,7 @@ $(PKG_BUILD_DIR)/.prepared:
 
 CPU_TYPE := UNKNOWN
 UART := NONE
+RB3011_PREINITS := NONE
 
 ifeq ($(PLATFORM),mikrotik-ipq4xxx)
 	CPU_TYPE := IPQ4XXX
@@ -60,7 +61,7 @@ loader-compile: $(PKG_BUILD_DIR)/.prepared
 		CPU_TYPE=$(CPU_TYPE) KERNEL_IMAGE=$(LOADER_DATA)					\
 		BLOCKSIZE=$(BLOCKSIZE) PAGESIZE=$(PAGESIZE) 							\
 		AUTOLEBS=$(AUTOLEBS)																			\
-		UART=$(UART)																							\
+		UART=$(UART) RB3011_PREINITS=$(RB3011_PREINITS)						\
 		clean $(LOADER_TYPE)
 
 loader.elf: $(PKG_BUILD_DIR)/bin/loader.elf

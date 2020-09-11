@@ -32,20 +32,29 @@
 #define _PLATFORM_IPQ40XX_IOMAP_H_
 
 #ifdef CONFIG_IPQ4XXX
-#define CLK_CTL_BASE		0x01800000
-#define GCNT_BASE		0x004a1000
-#define TIMER_BASE		0x0B021000
-#define UART2_DM_BASE		0x078b0000
-#define UART1_DM_BASE		0x078af000
-#define I2C0_BASE		0x078B7000
-#define TLMM_BASE		0x01000000
+#define CLK_CTL_BASE				0x01800000
+#define GCNT_BASE						0x004a1000
+#define TIMER_BASE					0x0B021000
+#define UART2_DM_BASE				0x078b0000
+#define UART1_DM_BASE				0x078af000
+#define I2C0_BASE						0x078B7000
+#define TLMM_BASE						0x01000000
 #define GPIO_CONFIG_ADDR(x) (TLMM_BASE + (x)*0x1000)
 #define GPIO_IN_OUT_ADDR(x) (TLMM_BASE + 0x4 + (x)*0x1000)
-
 #endif /* CONFIG_IPQ4XXX */
-#ifdef CONFIG_IPQ806X
-#define UART7_DM_BASE         	0x16640000
 
+#ifdef CONFIG_IPQ806X
+#define UART7_DM_BASE       0x16640000
+#define TLMM_BASE_ADDR      0x00800000
+#define GPIO_CONFIG_ADDR(x) (TLMM_BASE_ADDR + 0x1000 + (x)*0x10)
+#define GPIO_IN_OUT_ADDR(x) (TLMM_BASE_ADDR + 0x1004 + (x)*0x10)
+#define MSM_TMR_BASE        0x0200A000
+#define MSM_GPT_BASE        (MSM_TMR_BASE + 0x04)
+#define GPT_REG(off)        (MSM_GPT_BASE + (off))
+#define GPT_MATCH_VAL       GPT_REG(0x0000)
+#define GPT_COUNT_VAL       GPT_REG(0x0004)
+#define GPT_ENABLE          GPT_REG(0x0008)
+#define GPT_CLEAR           GPT_REG(0x000C)
 #endif /* CONFIG_IPQ806X */
 
 #endif /* _PLATFORM_IPQ40XX_IOMAP_H_ */

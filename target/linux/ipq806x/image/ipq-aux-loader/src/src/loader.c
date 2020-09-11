@@ -51,6 +51,7 @@ void reset_cpu(ulong);
 int fdt_check_header(void *, u32);
 char *fdt_get_prop(void *, char *, char *, u32 *);
 int lzma_gogogo(void *, void *, u32, u32 *);
+void ipq806x_rb3011_preinits(void);
 
 void my_memcpy(void *dst, const void *src, u32 n){
 	const void *end = src + n;
@@ -185,7 +186,12 @@ void loader_main(u32 head_text_base, u32 _arch)
 
 	printf("\n");
 	printf("OpenWrt kernel loader for Qualcomm IPQ-4XXX/IPQ-806X\n");
-	printf("Copyright (C) 2019  Sergey Sergeev <adron@mstnt.com>\n");
+	printf("Copyright 2019-2020 Sergey Sergeev <adron@mstnt.com>\n");
+
+#ifdef RB3011_PREINITS
+	printf("\n");
+	ipq806x_rb3011_preinits();
+#endif /* RB3011_PREINITS */
 
 	debug("\n");
 	debug("  head loader TEXT_BASE = 0x%08X\n", head_text_base);
@@ -231,3 +237,87 @@ void loader_main(u32 head_text_base, u32 _arch)
 	kernel_entry(kernel_p0, kernel_p1, kernel_p2);
 	reset_cpu(0);
 }
+
+#ifdef RB3011_PREINITS
+#include <gpio.h>
+#include <timer.h>
+#include <mdio.h>
+
+#define GPIO_MDIO1			10
+#define GPIO_MDC1				11
+#define GPIO_SW0_RESET	16
+#define GPIO_SW1_RESET	17
+#define	GPIO_USER_LED		33
+#define GPIO_LCD_POWER	48
+#define	GPIO_RST_BTN		66
+
+void do_phys_pwdown(int mdio_num){
+	int a;
+	mdio_reg_base = NSS_GMAC0_BASE;
+	if(mdio_num == 1)
+		mdio_reg_base = NSS_GMAC1_BASE;
+	for(a = 0; a <= 4; a++){
+		int val, limiter = 0;
+		while(limiter++ < 100){
+			val = ipq_phy_read(a, MII_PHYSID1);
+			//waiting for phy ready state
+			if(val == 0x4d){
+				val = ipq_phy_read(a, MII_BMCR);
+				val |= BMCR_PDOWN;
+				ipq_phy_write(a, MII_BMCR, val);
+				//printf("Phy %d:%d is PDOWN\n", mdio_num, a);
+				break;
+			}
+			udelay(1000);
+		}
+		if(limiter > 100){
+			printf("Phy %d:%d is NOT READY !!!\n", mdio_num, a);
+			gpio_set_value(GPIO_LCD_POWER, 1); //enable LCD power if error
+		}
+		//printf("phy %d: reg 0x00: 0x%x\n", a, ipq_phy_read(a, 0x00));
+		//printf("phy %d: reg 0x02: 0x%x\n", a, ipq_phy_read(a, 0x02));
+		//printf("phy %d: reg 0x03: 0x%x\n", a, ipq_phy_read(a, 0x03));
+	}
+}
+
+void ipq806x_rb3011_preinits(){
+	printf("Doing preinits for Mikrotik RB3011\n");
+	//timer init(it needs for udelay)
+	timer_init();
+	//configuring gpio
+	gpio_tlmm_config(GPIO_LCD_POWER, 0, GPIO_OUT_LOW, GPIO_PULL_DOWN, GPIO_16MA, GPIO_OE_ENABLE); //out - LCD
+	gpio_tlmm_config(GPIO_USER_LED, 0, GPIO_OUT_LOW, GPIO_PULL_DOWN, GPIO_16MA, GPIO_OE_ENABLE); //out - LED
+	//gpio_tlmm_config(GPIO_RST_BTN, 0, GPIO_INPUT, GPIO_PULL_UP, GPIO_2MA, GPIO_OE_DISABLE);  //in - reset button
+	gpio_tlmm_config(GPIO_MDIO1, 5, GPIO_INPUT, GPIO_NO_PULL, GPIO_8MA, GPIO_OE_DISABLE); //in - func5 - mdio
+	gpio_tlmm_config(GPIO_MDC1, 6, GPIO_OUTPUT, GPIO_NO_PULL, GPIO_8MA, GPIO_OE_ENABLE);  //out - func6 - mdio
+	gpio_tlmm_config(GPIO_SW0_RESET, 0, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_16MA, GPIO_OE_ENABLE); //out - func0 - gpio - switch0 reset
+	gpio_tlmm_config(GPIO_SW1_RESET, 0, GPIO_OUTPUT, GPIO_PULL_DOWN, GPIO_16MA, GPIO_OE_ENABLE); //out - func0 - gpio - switch1 reset
+	gpio_set_value(GPIO_LCD_POWER, 0); //disable LCD power
+  //disable switch0, phy_transivers0, switch1, phy_transivers1
+	gpio_set_value(GPIO_SW0_RESET, 0);
+	gpio_set_value(GPIO_SW1_RESET, 0);
+  mdelay(20);
+  //enable switch0, phy_transivers0, switch1, phy_transivers1
+  gpio_set_value(GPIO_SW0_RESET, 1);
+	gpio_set_value(GPIO_SW1_RESET, 1);
+  mdelay(20);
+  //set all phy transivers to power down state
+  do_phys_pwdown(0);
+	do_phys_pwdown(1);
+	//debug
+	if(0){
+		int a = 0, val = GPIO_OUT_HIGH;
+		watchdog_setup(10);
+		while(1){
+			mdelay(1000);
+			if(val == GPIO_OUT_LOW)
+				val = GPIO_OUT_HIGH;
+			else
+				val = GPIO_OUT_LOW;
+			gpio_set_value(GPIO_USER_LED, val);
+			printf("Hello...%d\n", a++);
+			//printf("reset button value = 0x%x\n", gpio_get_value(66));
+		}
+	}
+}
+#endif /* RB3011_PREINITS */
