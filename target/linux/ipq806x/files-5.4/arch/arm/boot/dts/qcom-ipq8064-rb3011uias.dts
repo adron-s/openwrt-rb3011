@@ -323,6 +323,8 @@
 	clocks = <&gcc USB30_1_MASTER_CLK>;
 	pinctrl-0 = <&usb0_pwr_en_pins>;
 	pinctrl-names = "default";
+	no-clk_bulk_get;
+	no-dwc3_qcom_setup_irq;
 	status = "okay";
 };
 
