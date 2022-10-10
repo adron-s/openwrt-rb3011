@@ -7,6 +7,7 @@ PKG_RELEASE:=2
 PKG_SOURCE_URL:=https://source.codeaurora.org/quic/qsdk/oss/lklm/nss-drv
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=809a00deffe9f3d4ecd15965790a152757073437
+PKG_MIRROR_HASH:=9c4340561fe9d6ccaa094bbfc5c7f98c27867d2d9a3f1a3f9a7483bca9bbedf8
 
 NSS_CLIENTS_DIR:=$(TOPDIR)/qca/src/qca-nss-clients
 
@@ -17,7 +18,7 @@ define KernelPackage/qca-nss-drv
   CATEGORY:=Kernel modules
   SUBMENU:=Network Devices
   DEPENDS:=@TARGET_ipq806x||TARGET_ipq_ipq806x||TARGET_ipq_ipq807x||TARGET_ipq_ipq807x_64||TARGET_ipq807x||TARGET_ipq807x_64||TARGET_ipq_ipq60xx||TARGET_ipq_ipq60xx_64||TARGET_ipq_ipq50xx||TARGET_ipq_ipq50xx_64 \
-		+PACKAGE_kmod-qca-nss-gmac:kmod-qca-nss-gmac @!LINUX_3_18
+		@!LINUX_3_18
   TITLE:=Kernel driver for NSS (core driver)
   FILES:=$(PKG_BUILD_DIR)/qca-nss-drv.ko
   AUTOLOAD:=$(call AutoLoad,32,qca-nss-drv)
@@ -54,8 +55,6 @@ ifneq (, $(findstring $(subtarget), "ipq807x" "ipq807x_64" "ipq60xx" "ipq60xx_64
 	$(CP) $(NSS_CLIENTS_DIR)/exports/nss_ipsecmgr.h $(1)/usr/include/qca-nss-clients/.
 endif
 endef
-
-EXTRA_CFLAGS+= -I$(STAGING_DIR)/usr/include/qca-nss-gmac
 
 # Keeping default as ipq806x for branches that does not have subtarget framework
 ifeq ($(CONFIG_TARGET_ipq),y)

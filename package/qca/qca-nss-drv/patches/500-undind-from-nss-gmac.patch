@@ -1,0 +1,69 @@
+diff -rNu a/Makefile b/Makefile
+--- a/Makefile	2022-10-07 11:10:21.150866150 +0300
++++ b/Makefile	2022-10-07 10:54:25.715262230 +0300
+@@ -130,7 +130,7 @@
+ qca-nss-drv-objs += nss_hal/nss_hal.o
+ 
+ ifeq ($(SoC),$(filter $(SoC),ipq806x ipq40xx))
+-qca-nss-drv-objs += nss_data_plane/nss_data_plane_gmac.o \
++qca-nss-drv-objs += \
+ 		    nss_hal/ipq806x/nss_hal_pvt.o \
+ 		    nss_dtls.o \
+ 		    nss_dtls_log.o \
+diff -rNu a/nss_data_plane/nss_data_plane.c b/nss_data_plane/nss_data_plane.c
+--- a/nss_data_plane/nss_data_plane.c	2019-08-23 02:12:02.000000000 +0300
++++ b/nss_data_plane/nss_data_plane.c	2022-10-07 11:23:50.070093510 +0300
+@@ -42,7 +42,7 @@
+ 		nss_warning("Failed to send pnode queue config to core 0\n");
+ 	}
+ 
+-	nss_top->data_plane_ops->data_plane_register(nss_ctx);
++	//nss_top->data_plane_ops->data_plane_register(nss_ctx);
+ }
+ 
+ /*
+diff -rNu a/nss_hal/nss_hal.c b/nss_hal/nss_hal.c
+--- a/nss_hal/nss_hal.c	2022-10-07 11:10:21.154866008 +0300
++++ b/nss_hal/nss_hal.c	2022-10-07 10:56:06.396227256 +0300
+@@ -634,7 +634,7 @@
+ 	/*
+ 	 * nss-drv is exiting, unregister and restore host data plane
+ 	 */
+-	nss_top->data_plane_ops->data_plane_unregister();
++	//nss_top->data_plane_ops->data_plane_unregister();
+ 
+ #if (NSS_FABRIC_SCALING_SUPPORT == 1)
+ 	fab_scaling_unregister(nss_core0_clk);
+diff -rNu a/nss_init.c b/nss_init.c
+--- a/nss_init.c	2019-08-23 02:12:02.000000000 +0300
++++ b/nss_init.c	2022-10-07 10:57:39.472332880 +0300
+@@ -657,7 +657,7 @@
+ #if defined(NSS_HAL_IPQ806X_SUPPORT)
+ 	if (of_machine_is_compatible("qcom,ipq8064") || of_machine_is_compatible("qcom,ipq8062")) {
+ 		nss_top_main.hal_ops = &nss_hal_ipq806x_ops;
+-		nss_top_main.data_plane_ops = &nss_data_plane_gmac_ops;
++		nss_top_main.data_plane_ops = NULL; //&nss_data_plane_gmac_ops;
+ 		nss_top_main.num_nss = 2;
+ 	}
+ #endif
+diff -rNu a/nss_phys_if.c b/nss_phys_if.c
+--- a/nss_phys_if.c	2022-10-07 11:10:21.158865867 +0300
++++ b/nss_phys_if.c	2022-10-07 11:10:01.679560367 +0300
+@@ -112,7 +112,7 @@
+ 		 * To create the old API gmac statistics, we use the new extended GMAC stats.
+ 		 */
+ 		nss_phys_if_update_driver_stats(nss_ctx, ncm->interface, &nim->msg.stats);
+-		nss_top_main.data_plane_ops->data_plane_stats_sync(&nim->msg.stats, ncm->interface);
++		//nss_top_main.data_plane_ops->data_plane_stats_sync(&nim->msg.stats, ncm->interface);
+ 		break;
+ 	}
+ 
+@@ -468,7 +468,7 @@
+ 		}
+ 	}
+ 
+-	mtu_sz = nss_top_main.data_plane_ops->data_plane_get_mtu_sz(max_mtu);
++	mtu_sz = 0; //nss_top_main.data_plane_ops->data_plane_get_mtu_sz(max_mtu);
+ 
+ /*
+  * We need to ensure the max_buf_size for 256MB profile stays
