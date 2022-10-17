@@ -1,6 +1,6 @@
 diff -rNu a/arch/arm/boot/dts/qcom-ipq8064.dtsi b/arch/arm/boot/dts/qcom-ipq8064.dtsi
 --- a/arch/arm/boot/dts/qcom-ipq8064.dtsi	2022-10-07 11:52:00.141458828 +0300
-+++ b/arch/arm/boot/dts/qcom-ipq8064.dtsi	2022-10-07 11:54:24.345399806 +0300
++++ b/arch/arm/boot/dts/qcom-ipq8064.dtsi	2022-10-14 09:00:55.183736148 +0300
 @@ -1434,6 +1434,132 @@
  			status = "disabled";
  		};
@@ -134,11 +134,11 @@ diff -rNu a/arch/arm/boot/dts/qcom-ipq8064.dtsi b/arch/arm/boot/dts/qcom-ipq8064
  		nand_controller: nand-controller@1ac00000 {
  			compatible = "qcom,ipq806x-nand";
  			reg = <0x1ac00000 0x800>;
-@@ -1543,6 +1669,17 @@
+@@ -1543,6 +1669,20 @@
  		};
  	};
  
-+	nss-common {
++	qcom_nss_common: nss-common {
 +		compatible = "qcom,nss-common";
 +		reg = <0x03000000 0x00001000>;
 +		reg-names = "nss_fpb_base";
@@ -146,6 +146,9 @@ diff -rNu a/arch/arm/boot/dts/qcom-ipq8064.dtsi b/arch/arm/boot/dts/qcom-ipq8064
 +			<&rpmcc RPM_NSS_FABRIC_0_CLK>, <&rpmcc RPM_NSS_FABRIC_1_CLK>;
 +		clock-names = "nss_core_clk", "nss_tcm_clk",
 +			"nss-fab0-clk", "nss-fab1-clk";
++		nss_core-supply = <&smb208_s1b>;
++		nss_core_vdd_nominal = <1100000>;
++		nss_core_vdd_high = <1150000>;
 +		nss_core_threshold_freq = <733000000>;
 +	};
 +
