@@ -1,0 +1,31 @@
+diff -rNu a/drivers/regulator/nss-volt-ipq806x.c b/drivers/regulator/nss-volt-ipq806x.c
+--- a/drivers/regulator/nss-volt-ipq806x.c	2022-10-14 13:28:00.436429815 +0300
++++ b/drivers/regulator/nss-volt-ipq806x.c	2022-10-14 13:29:10.230133318 +0300
+@@ -50,17 +50,18 @@
+ 	}
+ 
+ 	uV = data->nss_core_vdd_nominal;
+-	if (rate >= data->nss_core_threshold_freq)
+-		return data->nss_core_vdd_high;
++	if (rate < data->nss_core_threshold_freq) {
++		curr_uV = regulator_get_voltage(reg);
+ 
+-	curr_uV = regulator_get_voltage(reg);
+-
+-	if (ramp_up) {
+-		if (uV <= curr_uV)
+-			return 0;
++		if (ramp_up) {
++			if (uV <= curr_uV)
++				return 0;
++		} else {
++			if (uV >= curr_uV)
++				return 0;
++		}
+ 	} else {
+-		if (uV >= curr_uV)
+-			return 0;
++		uV = data->nss_core_vdd_high;
+ 	}
+ 
+ 	ret = regulator_set_voltage(reg, uV, data->nss_core_vdd_high);
