@@ -1,0 +1,38 @@
+diff -rNu a/drivers/cpufreq/qcom-cpufreq-krait.c b/drivers/cpufreq/qcom-cpufreq-krait.c
+--- a/drivers/cpufreq/qcom-cpufreq-krait.c	2022-10-13 14:42:11.703955990 +0300
++++ b/drivers/cpufreq/qcom-cpufreq-krait.c	2022-10-13 16:03:59.073656267 +0300
+@@ -86,11 +86,15 @@
+ 		dev_pm_opp_put(opp);
+ 
+ 		ret = dev_pm_opp_set_rate(&l2_pdev->dev, target_freq);
++		dev_info(&l2_pdev->dev, "set_rate ret: %d, target_freq: %lu\n", ret, target_freq);
+ 		if (ret)
+ 			return ret;
++	} else {
++		dev_warn(priv->cpu_dev, "l2_pdev is NULL !!!\n");
+ 	}
+ 
+ 	ret = dev_pm_opp_set_rate(priv->cpu_dev, freq * 1000);
++	dev_info(priv->cpu_dev, "set_rate ret: %d, freq: %lu\n", ret, freq * 100);
+ 	if (ret)
+ 		return ret;
+ 
+@@ -508,18 +512,6 @@
+ 		goto invalid_conf;
+ 	}
+ 	dev_pm_opp_put(opp);
+-
+-	/*
+-	 * Check if we have at least opp-level 1 in the cpu opp, 0 should always
+-	 * be set to the idle freq
+-	 */
+-	opp = dev_pm_opp_find_level_exact(cpu_dev, 1);
+-	if (IS_ERR(opp)) {
+-		dev_err(dev,
+-			"Invalid configuration found of cpu opp. Can't find opp-level 1");
+-		goto invalid_conf;
+-	}
+-	dev_pm_opp_put(opp);
+ 
+ 	platform_set_drvdata(pdev, data);
+ 
