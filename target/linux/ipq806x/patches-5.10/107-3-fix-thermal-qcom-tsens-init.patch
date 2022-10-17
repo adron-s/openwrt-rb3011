@@ -1,0 +1,32 @@
+diff -rNu a/drivers/thermal/qcom/tsens.c b/drivers/thermal/qcom/tsens.c
+--- a/drivers/thermal/qcom/tsens.c	2022-10-17 09:07:10.478938939 +0300
++++ b/drivers/thermal/qcom/tsens.c	2022-10-17 09:04:42.772666147 +0300
+@@ -630,6 +630,7 @@
+ 	struct tsens_priv *priv = s->priv;
+ 	int hw_id = s->hw_id;
+ 	int last_temp = 0, ret, trdy;
++	int err_ret = -ETIMEDOUT;
+ 	unsigned long timeout;
+ 
+ 	timeout = jiffies + usecs_to_jiffies(TIMEOUT_US);
+@@ -638,8 +639,10 @@
+ 			ret = regmap_field_read(priv->rf[TRDY], &trdy);
+ 			if (ret)
+ 				return ret;
+-			if (!trdy)
++			if (!trdy) {
++				err_ret = -EAGAIN;
+ 				continue;
++			}
+ 		}
+ 
+ 		ret = regmap_field_read(priv->rf[LAST_TEMP_0 + hw_id], &last_temp);
+@@ -651,7 +654,7 @@
+ 		return 0;
+ 	} while (time_before(jiffies, timeout));
+ 
+-	return -ETIMEDOUT;
++	return err_ret;
+ }
+ 
+ #ifdef CONFIG_DEBUG_FS
