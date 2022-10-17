@@ -1,0 +1,44 @@
+diff -rNu a/drivers/clk/qcom/fab_scaling.c b/drivers/clk/qcom/fab_scaling.c
+--- a/drivers/clk/qcom/fab_scaling.c	2022-10-14 13:00:03.282714230 +0300
++++ b/drivers/clk/qcom/fab_scaling.c	2022-10-14 13:02:27.009512836 +0300
+@@ -35,9 +35,9 @@
+ 	struct clk *ddr_fab_clk;
+ };
+ 
+-static struct qcom_fab_scaling_data *drv_data;
++static struct qcom_fab_scaling_data *drv_data = NULL;
+ 
+-int scale_fabrics(unsigned long max_cpu_freq)
++static int _scale_fabrics(unsigned long max_cpu_freq)
+ {	
+ 	struct clk *apps_fab_clk = drv_data->apps_fab_clk,
+ 	           *ddr_fab_clk = drv_data->ddr_fab_clk;
+@@ -66,6 +66,13 @@
+ 
+ 	return 0;
+ }
++int scale_fabrics(unsigned long max_cpu_freq)
++{
++	if (drv_data)
++		return _scale_fabrics(max_cpu_freq);
++	else
++		return 0; /* Skip fab scaling if the driver is not ready */
++}
+ EXPORT_SYMBOL(scale_fabrics);
+ 
+ static int ipq806x_fab_scaling_probe(struct platform_device *pdev)
+@@ -136,12 +143,14 @@
+ 	return 0;
+ err:
+ 	kfree(drv_data);
++	drv_data = NULL;
+ 	return ret;
+ }
+ 
+ static int ipq806x_fab_scaling_remove(struct platform_device *pdev)
+ {
+ 	kfree(drv_data);
++	drv_data = NULL;
+ 	return 0;
+ }
+ 
