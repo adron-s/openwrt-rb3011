@@ -1,0 +1,26 @@
+diff -rNu a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
+--- a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c	2022-10-24 13:25:10.480389108 +0300
++++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c	2022-10-25 13:50:26.458391017 +0300
+@@ -4100,13 +4100,21 @@
+ {
+ 	struct stmmac_priv *priv = netdev_priv(dev);
+ 	int txfifosz = priv->plat->tx_fifo_size;
+-	const int mtu = new_mtu;
++	int mtu = new_mtu;
+ 
+ 	if (txfifosz == 0)
+ 		txfifosz = priv->dma_cap.tx_fifo_size;
+ 
+ 	txfifosz /= priv->plat->tx_queues_to_use;
+ 
++	if (dev->mtu == dev->max_mtu) {
++		/* the mtu is already set to maximum => do nothing */
++		return 0;
++	} else {
++		/* perform the mtu setup only once and to the maximum value */
++		mtu = new_mtu = dev->max_mtu;
++	}
++
+ 	if (netif_running(dev)) {
+ 		netdev_err(priv->dev, "must be stopped to change its MTU\n");
+ 		return -EBUSY;

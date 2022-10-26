@@ -1,0 +1,61 @@
+diff -rNu a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
+--- a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c	2022-10-18 12:31:59.663702011 +0300
++++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c	2022-10-18 12:56:11.388129377 +0300
+@@ -3796,6 +3796,7 @@
+ 	unsigned int next_entry = rx_q->cur_rx;
+ 	unsigned int desc_size;
+ 	struct sk_buff *skb = NULL;
++	int add_net_ip_align = priv->plat->add_net_ip_align;
+ 
+ 	if (netif_msg_rx_status(priv)) {
+ 		void *rx_head;
+@@ -3913,11 +3914,21 @@
+ 		}
+ 
+ 		if (!skb) {
+-			skb = napi_alloc_skb(&ch->rx_napi, buf1_len);
+-			if (!skb) {
+-				priv->dev->stats.rx_dropped++;
+-				count++;
+-				goto drain_data;
++			if (add_net_ip_align) {
++				skb = napi_alloc_skb(&ch->rx_napi, buf1_len + NET_IP_ALIGN);
++				if (!skb) {
++					priv->dev->stats.rx_dropped++;
++					count++;
++					goto drain_data;
++				}
++				skb_reserve(skb, NET_IP_ALIGN);
++			} else {
++				skb = napi_alloc_skb(&ch->rx_napi, buf1_len);
++				if (!skb) {
++					priv->dev->stats.rx_dropped++;
++					count++;
++					goto drain_data;
++				}
+ 			}
+ 
+ 			dma_sync_single_for_cpu(priv->device, buf->addr,
+diff -rNu a/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c b/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c
+--- a/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c	2022-10-18 12:31:59.663702011 +0300
++++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c	2022-10-18 12:55:42.767006543 +0300
+@@ -469,6 +469,9 @@
+ 	plat->en_tx_lpi_clockgating =
+ 		of_property_read_bool(np, "snps,en-tx-lpi-clockgating");
+ 
++	plat->add_net_ip_align =
++		of_property_read_bool(np, "add-net-ip-align");
++
+ 	/* Set the maxmtu to a default of JUMBO_LEN in case the
+ 	 * parameter is not present in the device tree.
+ 	 */
+diff -rNu a/include/linux/stmmac.h b/include/linux/stmmac.h
+--- a/include/linux/stmmac.h	2022-10-18 12:31:59.663702011 +0300
++++ b/include/linux/stmmac.h	2022-10-18 12:57:14.726579799 +0300
+@@ -204,5 +204,6 @@
+ 	bool vlan_fail_q_en;
+ 	u8 vlan_fail_q;
+ 	unsigned int eee_usecs_rate;
++	int add_net_ip_align;
+ };
+ #endif
