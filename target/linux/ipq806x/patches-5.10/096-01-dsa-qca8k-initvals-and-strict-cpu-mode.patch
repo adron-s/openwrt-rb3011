@@ -1,0 +1,115 @@
+diff -rNu a/drivers/net/dsa/qca8k.c b/drivers/net/dsa/qca8k.c
+--- a/drivers/net/dsa/qca8k.c	2022-10-03 12:29:34.928985686 +0300
++++ b/drivers/net/dsa/qca8k.c	2022-10-03 13:08:50.290766320 +0300
+@@ -1132,6 +1132,37 @@
+ 	return 0;
+ }
+ 
++static void qca8k_load_initvals(struct qca8k_priv *priv)
++{
++	const __be32 *paddr;
++	int len;
++	int i;
++
++	/* Also we enable of disable strict cpu port mode flag */
++	if(of_property_read_bool(priv->dev->of_node, "qca,strict-cpu-mode"))
++		priv->strict_cpu_mode = 1;
++	else
++		priv->strict_cpu_mode = 0;
++
++	if(!priv->dev || !priv->dev->of_node)
++		return;
++	paddr = of_get_property(priv->dev->of_node, "qca,swregs-initvals", &len);
++	if (!paddr || len < (2 * sizeof(*paddr)))
++		return;
++
++	len /= sizeof(*paddr);
++
++	for (i = 0; i < len - 1; i += 2) {
++		u32 reg;
++		u32 val;
++
++		reg = be32_to_cpup(paddr + i);
++		val = be32_to_cpup(paddr + i + 1);
++
++		qca8k_write(priv, reg, val);
++	}
++}
++
+ static int
+ qca8k_setup(struct dsa_switch *ds)
+ {
+@@ -1170,6 +1201,9 @@
+ 		return ret;
+ 	}
+ 
++	/* Load optional initial values to switch registers */
++	qca8k_load_initvals(priv);
++
+ 	/* Enable CPU Port */
+ 	ret = regmap_set_bits(priv->regmap, QCA8K_REG_GLOBAL_FW_CTRL0,
+ 			      QCA8K_GLOBAL_FW_CTRL0_CPU_PORT_EN);
+@@ -1229,6 +1263,13 @@
+ 					QCA8K_PORT_LOOKUP_MEMBER, dsa_user_ports(ds));
+ 			if (ret)
+ 				return ret;
++			if (priv->strict_cpu_mode > 0) {
++				/* Disable ARP Auto-learning */
++				ret = regmap_clear_bits(priv->regmap, QCA8K_PORT_LOOKUP_CTRL(i),
++					QCA8K_PORT_LOOKUP_LEARN);
++				if (ret)
++					return ret;
++			}
+ 		}
+ 
+ 		/* Individual user ports get connected to CPU port only */
+@@ -1239,9 +1280,15 @@
+ 			if (ret)
+ 				return ret;
+ 
+-			/* Enable ARP Auto-learning by default */
+-			ret = regmap_set_bits(priv->regmap, QCA8K_PORT_LOOKUP_CTRL(i),
+-					      QCA8K_PORT_LOOKUP_LEARN);
++
++			/* Enable or Disable ARP Auto-learning */
++			if (priv->strict_cpu_mode == 0) {
++				ret = regmap_set_bits(priv->regmap, QCA8K_PORT_LOOKUP_CTRL(i),
++					QCA8K_PORT_LOOKUP_LEARN);
++			} else {
++				ret = regmap_clear_bits(priv->regmap, QCA8K_PORT_LOOKUP_CTRL(i),
++					QCA8K_PORT_LOOKUP_LEARN);
++			}
+ 			if (ret)
+ 				return ret;
+ 
+@@ -1817,6 +1864,9 @@
+ 	cpu_port = dsa_to_port(ds, port)->cpu_dp->index;
+ 	port_mask = BIT(cpu_port);
+ 
++	if (priv->strict_cpu_mode > 0)
++		return 0;
++
+ 	for (i = 0; i < QCA8K_NUM_PORTS; i++) {
+ 		if (dsa_is_cpu_port(ds, i))
+ 			continue;
+@@ -1847,6 +1897,9 @@
+ 	struct qca8k_priv *priv = (struct qca8k_priv *)ds->priv;
+ 	int cpu_port, i;
+ 
++	if (priv->strict_cpu_mode > 0)
++		return;
++
+ 	cpu_port = dsa_to_port(ds, port)->cpu_dp->index;
+ 
+ 	for (i = 0; i < QCA8K_NUM_PORTS; i++) {
+diff -rNu a/drivers/net/dsa/qca8k.h b/drivers/net/dsa/qca8k.h
+--- a/drivers/net/dsa/qca8k.h	2022-10-03 12:29:34.924985454 +0300
++++ b/drivers/net/dsa/qca8k.h	2022-10-03 12:47:12.445689096 +0300
+@@ -315,6 +315,7 @@
+ 	struct device *dev;
+ 	struct dsa_switch_ops ops;
+ 	struct gpio_desc *reset_gpio;
++	int strict_cpu_mode;
+ 	unsigned int port_mtu[QCA8K_NUM_PORTS];
+ };
+ 
