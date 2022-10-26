@@ -20,6 +20,30 @@ define Device/LegacyImage
 	KERNEL_NAME := zImage
 endef
 
+define Device/dsa-migration
+  DEVICE_COMPAT_VERSION := 1.1
+  DEVICE_COMPAT_MESSAGE := Config cannot be migrated from swconfig to DSA
+endef
+
+define Build/ipq-aux-loader-common
+	rm -rf $@.src
+	$(MAKE) -C ipq-aux-loader \
+		PKG_BUILD_DIR="$@.src" \
+		TARGET_DIR="$(dir $@)" LOADER_NAME="$(notdir $@)" \
+		TEXT_BASE2="0x00000000" \
+		BOARD="$(BOARDNAME)" PLATFORM="$(PLATFORM)" \
+		BLOCKSIZE="$(BLOCKSIZE)" PAGESIZE="$(PAGESIZE)" \
+		LEBSIZE="$(AUX_LOADER_LEBSIZE)" LEBCOUNT="$(AUX_LOADER_LEBCOUNT)" \
+		UART="$(AUX_LOADER_UART)"	RB3011_PREINITS="$(AUX_LOADER_RB3011_PREINITS)"\
+		$(1) LOADER_TYPE=$(2) compile loader.$(2)
+	mv "$@.$(2)" "$@"
+	rm -rf $@.src
+endef
+
+define Build/ipq-aux-loader-kernel
+	$(call Build/ipq-aux-loader-common,LOADER_DATA="$@",$(1))
+endef
+
 define Device/FitImage
 	KERNEL_SUFFIX := -fit-uImage.itb
 	KERNEL = kernel-bin | gzip | fit gzip $$(DTS_DIR)/$$(DEVICE_DTS).dtb
