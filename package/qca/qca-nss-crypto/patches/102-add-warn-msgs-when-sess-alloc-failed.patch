@@ -1,0 +1,19 @@
+diff -rNu a/v1.0/src/nss_crypto_ctrl.c b/v1.0/src/nss_crypto_ctrl.c
+--- a/v1.0/src/nss_crypto_ctrl.c	2019-04-16 00:37:09.000000000 +0300
++++ b/v1.0/src/nss_crypto_ctrl.c	2022-10-25 09:24:58.399270413 +0300
+@@ -1046,6 +1046,7 @@
+ 	if (atomic_read(&ctrl->perf_level) == NSS_PM_PERF_LEVEL_NOMINAL) {
+ 		nss_pm_set_perf_level(gbl_ctx.pm_hdl, NSS_PM_PERF_LEVEL_TURBO);
+ 		if (!wait_for_completion_timeout(&ctrl->perf_complete, NSS_CRYPTO_PERF_LEVEL_TIMEO_TICKS)) {
++			nss_crypto_warn("session id[%u] alloc fail. stage: %d\n", idx, 1);
+ 			goto fail;
+ 		}
+ 	}
+@@ -1055,6 +1056,7 @@
+ 	 */
+ 	status = nss_crypto_send_session_update(idx, NSS_CRYPTO_SESSION_STATE_ACTIVE, cipher_algo);
+ 	if (unlikely(status != NSS_CRYPTO_STATUS_OK)) {
++		nss_crypto_warn("session id[%u] alloc fail. stage: %d, status: %d\n", idx, 2, status);
+ 		goto fail;
+ 	}
+ 
