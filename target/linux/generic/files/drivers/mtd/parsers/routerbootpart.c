@@ -324,9 +324,13 @@ static int routerboot_partitions_parse(struct mtd_info *master,
 		parts[np].offset = offset;
 		parts[np].size = size;
 		parts[np].of_node = pp;
+		parts[np].mask_flags = 0;
+		parts[np].add_flags = 0;
 
 		if (of_get_property(pp, "read-only", &len))
 			parts[np].mask_flags |= MTD_WRITEABLE;
+		else
+			parts[np].add_flags |= MTD_WRITEABLE;
 
 		if (of_get_property(pp, "lock", &len))
 			parts[np].mask_flags |= MTD_POWERUP_LOCK;
