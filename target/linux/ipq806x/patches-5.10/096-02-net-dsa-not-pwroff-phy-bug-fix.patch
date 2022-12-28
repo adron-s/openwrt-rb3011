@@ -1,0 +1,13 @@
+diff -rNu a/net/dsa/slave.c b/net/dsa/slave.c
+--- a/net/dsa/slave.c	2022-10-03 12:29:35.317007969 +0300
++++ b/net/dsa/slave.c	2022-10-10 13:09:18.698087616 +0300
+@@ -1915,6 +1915,9 @@
+ 		goto out_gcells;
+ 	}
+ 
++	if(slave_dev->phydev)
++		phy_suspend(slave_dev->phydev);
++
+ 	dsa_slave_notify(slave_dev, DSA_PORT_REGISTER);
+ 
+ 	rtnl_lock();
