@@ -251,6 +251,31 @@ define Device/nec_wg2600hp3
 endef
 TARGET_DEVICES += nec_wg2600hp3
 
+define Device/MikrotikNAND
+	$(call Device/FitImageLzma)
+	DEVICE_VENDOR := MikroTik
+	KERNEL_INITRAMFS = $$(KERNEL) | ipq-aux-loader-kernel elf
+	KERNEL_INITRAMFS_SUFFIX := -fit-uImage.elf
+	PLATFORM := mikrotik-ipq806x
+	IMAGES := sysupgrade.bin
+	IMAGE/sysupgrade.bin := append-kernel | ipq-aux-loader-kernel ubi | sysupgrade-tar kernel=$$$$@ | append-metadata
+endef
+
+define Device/mikrotik_rb3011uias
+	$(Device/dsa-migration)
+	$(call Device/MikrotikNAND)
+	DEVICE_MODEL := RB3011UiAS
+	SOC := qcom-ipq8064
+	BLOCKSIZE := 128k
+	PAGESIZE := 2048
+	AUX_LOADER_LEBSIZE := 126976
+	AUX_LOADER_LEBCOUNT := 120
+	AUX_LOADER_RB3011_PREINITS := YES
+#	AUX_LOADER_UART := 7
+	DEVICE_PACKAGES := kmod-sfp
+endef
+TARGET_DEVICES += mikrotik_rb3011uias
+
 define Device/netgear_d7800
 	$(call Device/DniImage)
 	DEVICE_VENDOR := NETGEAR
