@@ -459,18 +459,15 @@
 	};
 };
 
-&hs_phy_0 { /* USB3 port 0 HS phy */
-	clocks = <&gcc USB30_1_UTMI_CLK>;
+&hs_phy_1 { /* USB3 port 0 HS phy */
 	status = "okay";
 };
 
-&ss_phy_0 { /* USB3 port 0 SS phy */
-	clocks = <&gcc USB30_1_MASTER_CLK>;
+&ss_phy_1 { /* USB3 port 0 SS phy */
 	status = "okay";
 };
 
-&usb3_0 {
-	clocks = <&gcc USB30_1_MASTER_CLK>;
+&usb3_1 {
 	no-clk_bulk_get;
 	no-dwc3_qcom_setup_irq;
 	status = "okay";
