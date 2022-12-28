@@ -1,7 +1,7 @@
 diff -rNu a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
---- a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c	2022-10-18 12:31:59.663702011 +0300
-+++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c	2022-10-18 12:56:11.388129377 +0300
-@@ -3796,6 +3796,7 @@
+--- a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c	2022-12-28 08:00:14.001086178 +0200
++++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c	2022-12-28 08:05:42.117702112 +0200
+@@ -3795,6 +3795,7 @@
  	unsigned int next_entry = rx_q->cur_rx;
  	unsigned int desc_size;
  	struct sk_buff *skb = NULL;
@@ -9,7 +9,7 @@ diff -rNu a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c b/drivers/net/ethe
  
  	if (netif_msg_rx_status(priv)) {
  		void *rx_head;
-@@ -3913,11 +3914,21 @@
+@@ -3912,11 +3913,21 @@
  		}
  
  		if (!skb) {
@@ -37,9 +37,9 @@ diff -rNu a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c b/drivers/net/ethe
  
  			dma_sync_single_for_cpu(priv->device, buf->addr,
 diff -rNu a/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c b/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c
---- a/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c	2022-10-18 12:31:59.663702011 +0300
-+++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c	2022-10-18 12:55:42.767006543 +0300
-@@ -469,6 +469,9 @@
+--- a/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c	2022-12-28 08:00:14.001086178 +0200
++++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c	2022-12-28 08:05:42.117702112 +0200
+@@ -468,6 +468,9 @@
  	plat->en_tx_lpi_clockgating =
  		of_property_read_bool(np, "snps,en-tx-lpi-clockgating");
  
@@ -50,12 +50,12 @@ diff -rNu a/drivers/net/ethernet/stmicro/stmmac/stmmac_platform.c b/drivers/net/
  	 * parameter is not present in the device tree.
  	 */
 diff -rNu a/include/linux/stmmac.h b/include/linux/stmmac.h
---- a/include/linux/stmmac.h	2022-10-18 12:31:59.663702011 +0300
-+++ b/include/linux/stmmac.h	2022-10-18 12:57:14.726579799 +0300
-@@ -204,5 +204,6 @@
- 	bool vlan_fail_q_en;
+--- a/include/linux/stmmac.h	2022-12-28 08:00:14.005086427 +0200
++++ b/include/linux/stmmac.h	2022-12-28 08:06:07.383294993 +0200
+@@ -205,5 +205,6 @@
  	u8 vlan_fail_q;
  	unsigned int eee_usecs_rate;
+ 	bool sph_disable;
 +	int add_net_ip_align;
  };
  #endif
