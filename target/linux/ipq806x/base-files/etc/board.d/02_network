@@ -31,6 +31,9 @@ qcom,ipq8064-ap148)
 	ucidef_add_switch "switch0" \
 		"1:lan" "2:lan" "3:lan" "4:lan" "6@eth1" "5:wan" "0@eth0"
 	;;
+mikrotik,rb3011uias)
+	ucidef_set_interfaces_lan_wan "port2 port3 port4 port5 port6 port7 port8 port9" "port1"
+	;;
 edgecore,ecw5410)
 	ucidef_set_interfaces_lan_wan "eth1" "eth0"
 	;;
